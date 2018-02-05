@@ -9,3 +9,9 @@ function getCoords2(j)
     return(0,0)
   end
 end
+
+function getCoords3(j)
+  if (j < 1 || j > N)
+    return(0,0)
+  end
+end
