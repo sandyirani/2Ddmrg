@@ -30,27 +30,27 @@ function getNeighbors(n, mpsNeigh)
 
   (j, k) = getCoords(n)
   count = 1 + Int8(j > 1) + Int8(j < length)
-  neighbors = zeros(count)
+  neighbors = zeros(Int64, count)
   current = 1
 
   up = (k == width? 1: k+1)
   neigh = getIndex(j, up)
   if (neigh != mpsNeigh)
-    neighbors[current] = neigh
+    neighbors[current] = Int64(neigh)
     current+=1
   end
 
   down = (k == 1? width: k-1)
   neigh = getIndex(j, down)
   if (neigh != mpsNeigh)
-    neighbors[current] = neigh
+    neighbors[current] = Int64(neigh)
     current+=1
   end
 
   if (j > 1)
     neigh = getIndex(j-1,k)
     if (neigh != mpsNeigh)
-      neighbors[current] = neigh
+      neighbors[current] = Int64(neigh)
       current+=1
     end
   end
@@ -58,10 +58,11 @@ function getNeighbors(n, mpsNeigh)
   if (j < length)
     neigh = getIndex(j+1,k)
     if (neigh != mpsNeigh)
-      neighbors[current] = neigh
+      neighbors[current] = Int64(neigh)
       current+=1
     end
   end
+  neighbors
 end
 
 function getNumSpan(n)
@@ -71,15 +72,15 @@ function getNumSpan(n)
 
   (j, k) = getCoords(n)
 
-  vert = ( k > 1 && k < width-1? 1: 0)
+  vert = Int8((isodd(j) && k > 1 && k < width-1) || (iseven(j) && k > 2 && k < width))
   if (j == length)
-    return(vert)
+    return(Int64(vert))
   end
 
   if (iseven(j))
-    return(vert+width-k)
+    return(Int64(vert+width-k))
   else
-    return(vert+k-1)
+    return(Int64(vert+k-1))
   end
 end
 
@@ -89,24 +90,29 @@ function getSpanningPairs(n)
   # a and b are the indices of the particles, not the 2d grid coordinates
   # a's are stored in leftPoints and b's in rightPoints
   numSpan = getNumSpan(n)
-  leftPoints = zeros(numSpan)
-  rightPoints = zeros(numSpan)
+  leftPoints = zeros(Int64, numSpan)
+  rightPoints = zeros(Int64, numSpan)
   (j, k) = getCoords(n)
 
   if (j < length)
     (a,b) = (iseven(j)? (k+1,width): (1,k-1))
     for i = a:b
-      leftPoints[i-a+1] = getIndex(j,a)
-      rightPoints[i-a+1] = getIndex(j+1,a)
+      leftPoints[i-a+1] = Int64(getIndex(j,i))
+      rightPoints[i-a+1] = Int64(getIndex(j+1,i))
     end
   end
 
-  if (k > 1 && k < width-1)
+  if (isodd(j) && k > 1 && k < width-1) || (iseven(j) && k > 2 && k < width)
+
     low = getIndex(j,1)
     high = getIndex(j,width)
-    if (high < low) (low, high) = (high,low) end
-    leftPoints[numSpan] = low
-    rightPoints[numSpan]  high
+    if (high < low)
+        (low, high) = (high,low)
+    end
+    leftPoints[numSpan] = Int64(low)
+    rightPoints[numSpan] = Int64(high)
   end
+
+  (leftPoints, rightPoints)
 
 end
