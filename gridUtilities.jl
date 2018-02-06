@@ -67,6 +67,7 @@ end
 function getNumSpan(n)
   #returns the number of Hamiltonain terms (a, b)
   # where a < n and b > n+1
+  # a and b are the indices of the particles, not the 2d grid coordinates
 
   (j, k) = getCoords(n)
 
@@ -83,6 +84,10 @@ function getNumSpan(n)
 end
 
 function getSpanningPairs(n)
+  #returns the set of Hamiltonain terms (a, b)
+  # where a < n and b > n+1
+  # a and b are the indices of the particles, not the 2d grid coordinates
+  # a's are stored in leftPoints and b's in rightPoints
   numSpan = getNumSpan(n)
   leftPoints = zeros(numSpan)
   rightPoints = zeros(numSpan)
