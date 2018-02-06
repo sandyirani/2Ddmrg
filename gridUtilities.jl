@@ -103,7 +103,6 @@ function getSpanningPairs(n)
   end
 
   if (isodd(j) && k > 1 && k < width-1) || (iseven(j) && k > 2 && k < width)
-
     low = getIndex(j,1)
     high = getIndex(j,width)
     if (high < low)
@@ -114,5 +113,60 @@ function getSpanningPairs(n)
   end
 
   (leftPoints, rightPoints)
+
+end
+
+function getLeftDepth(n)
+    #returns the smallest index a such that there is a term
+    #(a, b), where a <= n and b > n.
+    #Note a <= n because (n, n+1) is a term
+    #the number of left side terms to store is n-a+1
+
+    a = n
+
+    if (n >= N-1) return(n)
+
+    neighbors = getNeighbors(n+1, n+2)
+    for j = 1:length(neighbors)
+        a = min(a, neighbors[j])
+    end
+    neighbors = getNeighbors(n+2, n+1)
+    for j = 1:length(neighbors)
+        a = min(a, neighbors[j])
+    end
+
+    (left, right) = getSpanningPairs(n+1)
+    for j = 1:length(left)
+        a = min(a, left[j])
+    end
+
+    return(a)
+
+end
+
+function getRightDepth(n)
+    #returns the largest index b such that there is a term
+    #(a, b), where b >= n and a < n.
+    #Note a <= n because (n, n+1) is a term
+    #the number of left side terms to store is n-a+1
+
+    b = n
+    if (n <= 2) return(n)
+
+    neighbors = getNeighbors(n-1, n-2)
+    for j = 1:length(neighbors)
+        b = max(b, neighbors[j])
+    end
+    neighbors = getNeighbors(n-2, n-1)
+    for j = 1:length(neighbors)
+        b = max(b, neighbors[j])
+    end
+
+    (left, right) = getSpanningPairs(n-2)
+    for j = 1:length(left)
+        b = max(b, right[j])
+    end
+
+    return(a)
 
 end
