@@ -29,7 +29,7 @@ function getNeighbors(n, mpsNeigh)
   # mpsNeigh.
 
   (j, k) = getCoords(n)
-  count = 1 + Int8(j > 1) + Int8(j < length)
+  count = 1 + Int8(j > 1) + Int8(j < len)
   neighbors = zeros(Int64, count)
   current = 1
 
@@ -55,7 +55,7 @@ function getNeighbors(n, mpsNeigh)
     end
   end
 
-  if (j < length)
+  if (j < len)
     neigh = getIndex(j+1,k)
     if (neigh != mpsNeigh)
       neighbors[current] = Int64(neigh)
@@ -73,7 +73,7 @@ function getNumSpan(n)
   (j, k) = getCoords(n)
 
   vert = Int8((isodd(j) && k > 1 && k < width-1) || (iseven(j) && k > 2 && k < width))
-  if (j == length)
+  if (j == len)
     return(Int64(vert))
   end
 
@@ -94,7 +94,7 @@ function getSpanningPairs(n)
   rightPoints = zeros(Int64, numSpan)
   (j, k) = getCoords(n)
 
-  if (j < length)
+  if (j < len)
     (a,b) = (iseven(j)? (k+1,width): (1,k-1))
     for i = a:b
       leftPoints[i-a+1] = Int64(getIndex(j,i))
@@ -124,7 +124,7 @@ function getLeftDepth(n)
 
     a = n
 
-    if (n >= N-1) return(n)
+    if (n >= N-1) return(n) end
 
     neighbors = getNeighbors(n+1, n+2)
     for j = 1:length(neighbors)
@@ -151,7 +151,7 @@ function getRightDepth(n)
     #the number of left side terms to store is n-a+1
 
     b = n
-    if (n <= 2) return(n)
+    if (n <= 2) return(n) end
 
     neighbors = getNeighbors(n-1, n-2)
     for j = 1:length(neighbors)
@@ -167,6 +167,6 @@ function getRightDepth(n)
         b = max(b, right[j])
     end
 
-    return(a)
+    return(b)
 
 end
