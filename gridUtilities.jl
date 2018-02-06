@@ -69,14 +69,16 @@ function getNumSpan(n)
   # where a < n and b > n+1
 
   (j, k) = getCoords(n)
+
+  vert = ( k > 1 && k < width-1? 1: 0)
   if (j == length)
-    return(0)
+    return(vert)
   end
 
   if (iseven(j))
-    return(width-k)
+    return(vert+width-k)
   else
-    return(k-1)
+    return(vert+k-1)
   end
 end
 
