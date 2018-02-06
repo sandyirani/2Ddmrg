@@ -84,5 +84,24 @@ end
 
 function getSpanningPairs(n)
   numSpan = getNumSpan(n)
+  leftPoints = zeros(numSpan)
+  rightPoints = zeros(numSpan)
+  (j, k) = getCoords(n)
+
+  if (j < length)
+    (a,b) = (iseven(j)? (k+1,width): (1,k-1))
+    for i = a:b
+      leftPoints[i-a+1] = getIndex(j,a)
+      rightPoints[i-a+1] = getIndex(j+1,a)
+    end
+  end
+
+  if (k > 1 && k < width-1)
+    low = getIndex(j,1)
+    high = getIndex(j,width)
+    if (high < low) (low, high) = (high,low) end
+    leftPoints[numSpan] = low
+    rightPoints[numSpan]  high
+  end
 
 end
