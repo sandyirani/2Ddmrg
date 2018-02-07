@@ -35,6 +35,8 @@ for swp = 0:10
     Ham = zeros(alpha*beta,alpha*beta)
 
     HL = zeros(dleft,2,dleft,2)
+    HR = zeros(2,dright,2,dright)
+    #  Inefficient implementation:  m^4   Ham construction
     Hspan = zeros(dleft,2,2,dright,dleft,2,2,dright)
     Ileft = eye(dleft)
     Iright = eye(dright)
@@ -50,45 +52,67 @@ for swp = 0:10
         Ham += JK(HL,eye(beta))
       end
 
-      if (neighs[j] > i)
+      if (neighs[j] > i+1)
         Aright = Aopen[i+2,neighs[j]-i-1]
         @tensor begin
-          Hspan[sip1,b,a,si,sip1p,bp,ap,sip] := Htwosite[si,sr,sip,srp] * Aright[b,sr,bp,srp] * onesite(sip1, sip1p) * Iright[a,ap]
+          Hspan[sip1,b,a,si,sip1p,bp,ap,sip] := Htwosite[si,sr,sip,srp] * Aright[b,sr,bp,srp] * onesite[sip1, sip1p] * Iright[a,ap]
         end
         Ham += reshape(Hspan,alpha*beta,alpha*beta)
       end
     end
 
-    i > 2 && ( Ham += JK(JK(onesite,HLR[i-1]),eye(beta)) )
-
-
-    HR = zeros(2,dright,2,dright)
-    if i < n-1
-      Ai2 = A[i+2]
-      @tensor begin
-        HR[si1,b,si1p,bp] := Htwosite[si1,si2,si1p,si2p] * Ai2[b,si2,a] * Ai2[bp,si2p,a]
+    neighs = getNeighbors(i+1,i)
+    for j=1:length(neighs)
+      if (neighs[j] > i+1)
+        Aright = Aopen[i+2, neighs[j]-i-1]
+        @tensor begin
+          HR[sip1,b,sip1p,bp] := Htwosite[sip1,sr,sip1p,srp] * Aright[sr,b,srp,bp]
+        end
+        HR = reshape(HR,beta,beta)
+        Ham += JK(eye(alpha),HR)
       end
-      i < n-2 && (HR += JK4(onesite,HLR[i+2]) )
-      HR = reshape(HR,beta,beta)
-      Ham += JK(eye(alpha),HR)
+
+      if (neighs[j] < i)
+        Aleft = Aopen[i-1,i-1-neighs[j]+1]
+        @tensor begin
+          Hspan[sip1,b,a,si,sip1p,bp,ap,sip] := Htwosite[sl,sip1,slp,sip1p] * Aleft[a,sl,ap,slp] * onesite[si, sip] * Iright[a,ap]
+        end
+        Ham += reshape(Hspan,alpha*beta,alpha*beta)
+      end
     end
 
+    i < N-1 && ( Ham += JK(eye(alpha),JK(HLR[i+2], onesite))) )
+
+    (left, right) = getSpanningPairs(i)
+    for j=1:length(left)
+      Aright = Aopen[i+2, left[j]-i-1]
+      Aleft = Aopen[i-1,i-1-right[j]+1]
+      @tensor begin
+          Hspan[sip1,b,a,si,sip1p,bp,ap,sip] := Htwosite[sl,sr,slp,srp] * Aleft[a,sl,ap,slp] * Aright[sr,b,srp,bp] * onesite[si,sip] * onesite[sip1, sip1p]
+      end
+      Ham += reshape(Hspan,alpha*beta,alpha*beta)
+    end
+
+      if (neighs[j] < i)
+        Aleft = Aopen[i-1,i-1-neighs[j]+1]
+        @tensor begin
+          Hspan[sip1,b,a,si,sip1p,bp,ap,sip] := Htwosite[sl,sip1,slp,sip1p] * Aleft[a,sl,ap,slp] * onesite[si, sip] * Iright[a,ap]
+        end
+        Ham += reshape(Hspan,alpha*beta,alpha*beta)
+      end
+    end
 
     Oleft =  Any[JK(eye(dleft),sz), 0.5*JK(eye(dleft),sp), 0.5*JK(eye(dleft),sm)]
     Oright = Any[JK(sz,eye(dright)),JK(sm,eye(dright)),JK(sp,eye(dright))]
+    for j=1:length(Oleft)
+      Ham += JK(reshape(Oleft[j],alpha,alpha),reshape(Oright[j],beta,beta))
+    end
 
     Ai = A[i]
     Ai1 = A[i+1]
     @tensor begin
       AA[a,b,d,e] := Ai[a,b,c] * Ai1[c,d,e]
     end
-
-    #  Inefficient implementation:  m^4   Ham construction
-    for j=1:length(Oleft)
-      Ham += JK(reshape(Oleft[j],alpha,alpha),reshape(Oright[j],beta,beta))
-    end
-
-
 
     bigH = 0.5 * (Ham + Ham')
     evn = eigs(bigH;nev=1, which=:SR,ritzvec=true,v0=reshape(AA,alpha*beta))

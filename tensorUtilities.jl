@@ -23,8 +23,7 @@ function dosvdMid(AA)
     (U,d,V) = svd(AA)
     d = sqrt(d)
     V = diagm(d) * V
-	  U = U * diagm(d)
-    end
+	U = U * diagm(d)
     (U,V)
 end
 
