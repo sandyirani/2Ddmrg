@@ -93,14 +93,7 @@ for swp = 0:10
       Ham += reshape(Hspan,alpha*beta,alpha*beta)
     end
 
-      if (neighs[j] < i)
-        Aleft = Aopen[i-1,i-1-neighs[j]+1]
-        @tensor begin
-          Hspan[sip1,b,a,si,sip1p,bp,ap,sip] := Htwosite[sl,sip1,slp,sip1p] * Aleft[a,sl,ap,slp] * onesite[si, sip] * Iright[a,ap]
-        end
-        Ham += reshape(Hspan,alpha*beta,alpha*beta)
-      end
-    end
+
 
     Oleft =  Any[JK(eye(dleft),sz), 0.5*JK(eye(dleft),sp), 0.5*JK(eye(dleft),sm)]
     Oright = Any[JK(sz,eye(dright)),JK(sm,eye(dright)),JK(sp,eye(dright))]
