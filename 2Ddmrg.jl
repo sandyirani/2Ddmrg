@@ -28,6 +28,7 @@ function mainLoop()
   m = 3
   for swp = 0:10
     m = round(Int64,1.3*m)
+      println("\n sweep = $swp")
     sweep(m)
   end
 end

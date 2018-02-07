@@ -3,12 +3,12 @@
 
 
 function sweep(m)
-  for ii=-n+1:n-1		# if negative, going right to left
+  for ii=-N+1:N-1		# if negative, going right to left
     ii == 0 && continue
     i = abs(ii)
     toright = ii > 0
 
-    println("\n sweep, i, dir, m = $swp, $i, ",toright ? "to right" : "to left"," $m")
+    println("\n i, dir, m = $i, ",toright ? "to right" : "to left"," $m")
 
     dleft = size(A[i],1)
     alpha = dleft * 2
@@ -47,7 +47,7 @@ function sweep(m)
       if (neighs[j] > i+1)
         Aright = Aopen[i+2,neighs[j]-i-1]
         @tensor begin
-          Hspan[a,si,sip1,b,ap,sip,sip1p,bp] := Htwosite[si,sr,sip,srp] * Aright[b,sr,bp,srp] * onesite[sip1, sip1p] * Iright[a,ap]
+          Hspan[a,si,sip1,b,ap,sip,sip1p,bp] := Htwosite[si,sr,sip,srp] * Aright[b,sr,bp,srp] * onesite[sip1, sip1p] * Ileft[a,ap]
         end
         Ham += reshape(Hspan,alpha*beta,alpha*beta)
       end
@@ -75,13 +75,13 @@ function sweep(m)
       if (neighs[j] < i)
         Aleft = Aopen[i-1,i-1-neighs[j]+1]
         @tensor begin
-          Hspan[a,si,sip1,b,ap,sip,sip1p,bp] := Htwosite[sl,sip1,slp,sip1p] * Aleft[a,sl,ap,slp] * onesite[si, sip] * Iright[a,ap]
+          Hspan[a,si,sip1,b,ap,sip,sip1p,bp] := Htwosite[sl,sip1,slp,sip1p] * Aleft[a,sl,ap,slp] * onesite[si, sip] * Iright[b,bp]
         end
         Ham += reshape(Hspan,alpha*beta,alpha*beta)
       end
     end
-    i < N-1 && ( Ham += JK(eye(alpha),JK(onesite,HLR[i+2])) )
-    if (i < N-1 && !toright)
+    i < N-2 && ( Ham += JK(eye(alpha),JK(onesite,HLR[i+2])) )
+    if (i < N-2 && !toright)
       HLRupdate += JK(onesite,HLR[i+2])
     end
 
@@ -122,7 +122,7 @@ function sweep(m)
     #updates to A, HLR and Aopen
     (A[i],A[i+1],trunc) = dosvd4(AA,m,toright)
     @show trunc
-    if toright && i < n-1
+    if toright && i < N-1
       updateToRight(i, HLRupdate)
     elseif !toright && i > 1
       updateToLeft(i, HLRupdate)
@@ -166,7 +166,7 @@ function updateToLeft(i, HLRupdate)
     Aopeni1[a, si, ap, sip] := Ai1[a,si,b]*Ai1[ap,sip,b]
   end
   Aopen[i+1,1] = Aopeni1
-  for j = 2:min(n-i,2*width)
+  for j = 2:min(N-i,2*width)
     Aopenip2 = Aopen[i+2,j-1]
     @tensor begin
       Aopenip1[a,sl,ap,slp] := Aopenip2[b,sl,bp,slp]*Ai1[a,si,b]*Ai1[ap,si,bp]
@@ -175,7 +175,7 @@ function updateToLeft(i, HLRupdate)
   end
 
   Ai12 = reshape(A[i+1],i1,i2*i3)
-  if  i < n-1
+  if  i < N-1
     @tensor begin
       hlri1[a,ap] := HLRupdate[b,bp] * Ai12[a,b] * Ai12[ap,bp]
     end
