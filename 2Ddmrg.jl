@@ -26,9 +26,12 @@ Aopen = [zeros(1,2,1,2) for i=1:N,  j=1:2*width]
 
 function mainLoop()
   m = 3
-  for swp = 0:10
+  numSweeps = 10
+  energies = zeros(numSweeps)
+  for swp = 0:numSweeps
     m = round(Int64,1.3*m)
       println("\n sweep = $swp")
-    sweep(m)
+    energies[swp] = sweep(m)/N
   end
+  energies
 end
