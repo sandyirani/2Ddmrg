@@ -98,10 +98,13 @@ function sweepFast(m)
 
 
     #Hamiltonian term on current edge (i, i+1)
+    #This is specific to Hiesenberg will need to make generic
     Oleft =  Any[JK(eye(dleft),sz), 0.5*JK(eye(dleft),sp), 0.5*JK(eye(dleft),sm)]
     Oright = Any[JK(sz,eye(dright)),JK(sm,eye(dright)),JK(sp,eye(dright))]
     for j=1:length(Oleft)
-      Ham += JK(reshape(Oleft[j],alpha,alpha),reshape(Oright[j],beta,beta))
+      numPairs += 1
+      leftMat[numPairs] = reshape(Oleft[j],alpha,alpha
+      rightMat[numPairs] = reshape(Oright[j],beta,beta)
     end
 
     #Current tensor is starting point for Lanczos eig algorithm
@@ -111,7 +114,10 @@ function sweepFast(m)
       AA[a,b,d,e] := Ai[a,b,c] * Ai1[c,d,e]
     end
 
-    bigH = 0.5 * (Ham + Ham')
+    params[1] = alpha
+    params[2] = beta
+    params[3] = numPairs
+    bigH = LinearMap(applyH, alpha*beta; ismutating=false)
     evn = eigs(bigH;nev=1, which=:SR,ritzvec=true,v0=reshape(AA,alpha*beta))
     @show evn[1]
     @show size(evn[2])
@@ -132,54 +138,9 @@ function sweepFast(m)
 
 end #end of function sweep
 
-function updateToRight(i, HLRupdate)
-
-  (i1,i2,i3) = size(A[i])
-  Ai = A[i]
-  @tensor begin
-    Aopeni[b, si, bp, sip] := Ai[a,si,b]*Ai[a,sip,bp]
-  end
-  Aopen[i,1] = Aopeni
-  for j = 2:min(i,2*width)
-    Aopenim1 = Aopen[i-1,j-1]
-    @tensor begin
-      Aopeni[b,sl,bp,slp] := Aopenim1[a,sl,ap,slp]*Ai[a,si,b]*Ai[ap,si,bp]
-    end
-    Aopen[i,j] = Aopeni
-  end
-
-  Ai2 = reshape(A[i],i1*i2,i3)
-  if 1 < i
-    @tensor begin
-      hlri[b,bp] := HLRupdate[a,ap] * Ai2[a,b] * Ai2[ap,bp]
-    end
-    HLR[i] = hlri
-  end
-
-end
-
-function updateToLeft(i, HLRupdate)
-
-  (i1,i2,i3) = size(A[i+1])
-  Ai1 = A[i+1]
-  @tensor begin
-    Aopeni1[a, si, ap, sip] := Ai1[a,si,b]*Ai1[ap,sip,b]
-  end
-  Aopen[i+1,1] = Aopeni1
-  for j = 2:min(N-i,2*width)
-    Aopenip2 = Aopen[i+2,j-1]
-    @tensor begin
-      Aopenip1[a,sl,ap,slp] := Aopenip2[b,sl,bp,slp]*Ai1[a,si,b]*Ai1[ap,si,bp]
-    end
-    Aopen[i+1,j] = Aopenip1
-  end
-
-  Ai12 = reshape(A[i+1],i1,i2*i3)
-  if  i < N-1
-    @tensor begin
-      hlri1[a,ap] := HLRupdate[b,bp] * Ai12[a,b] * Ai12[ap,bp]
-    end
-    HLR[i+1] = hlri1
-  end
+function applyH(v::AbstractVector)
+  alpha = params[1]
+  beta = params[2]
+  numPairs = params[3]
 
 end
