@@ -1,6 +1,7 @@
 include("gridUtilities.jl")
 include("tensorUtilities.jl")
 include("dmrg.jl")
+include("dmrgFast.jl")
 
 width = 6
 len = 10
@@ -23,6 +24,14 @@ end
 
 HLR = [zeros(1,1) for i=1:N]	# Initialize to avoid errors on firs sweep
 Aopen = [zeros(1,2,1,2) for i=1:N,  j=1:2*width]
+
+alphaG = 0
+betaG = 0
+lrDim = size(hl)[2]
+maxPairs = 2 * width * lrDim
+numPairs = 0
+leftMats = [zeros(1,1) for i=1:maxPairs]
+rightMats = [zeros(1,1) for i=1:maxPairs]
 
 function mainLoop()
   m = 3
