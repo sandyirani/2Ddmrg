@@ -26,10 +26,16 @@ end
 HLR = [zeros(1,1) for i=1:N]	# Initialize to avoid errors on firs sweep
 Aopen = [zeros(1,2,1,2) for i=1:N,  j=1:2*width]
 
+<<<<<<< HEAD
+params = zeros(3) #this will hold alpha, beta, and numPairs for the current iteration
+lrDim = size(hl)[2]
+maxPairs = (2 * width + 6) * lrDim
+=======
 alphaG = 0
 betaG = 0
 maxPairs = 2 * width * lrDim
 numPairs = 0
+>>>>>>> e3ce2ae42de8efe6f617e124a5770372e0535e3a
 leftMats = [zeros(1,1) for i=1:maxPairs]
 rightMats = [zeros(1,1) for i=1:maxPairs]
 
