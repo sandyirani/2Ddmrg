@@ -15,12 +15,13 @@ function sweepFast(m)
     dright = size(A[i+1],3)
     beta = 2 * dright
     onesite = eye(2)
-    Ham = zeros(alpha*beta,alpha*beta)
+    numPairs = 0
+
 
     HL = zeros(dleft,2,dleft,2)
     HR = zeros(2,dright,2,dright)
     #  Inefficient implementation:  m^4   Ham construction
-    Hspan = zeros(dleft,2,2,dright,dleft,2,2,dright)
+
     Ileft = eye(dleft)
     Iright = eye(dright)
     if (toright)
@@ -41,18 +42,28 @@ function sweepFast(m)
         if (toright)
           HLRupdate += HL
         end
-        Ham += JK(HL,eye(beta))
+        numPairs+=1
+        leftMats[numPairs] = HL
+        rightMats[numPairs] = eye(beta)
       end
 
       if (neighs[j] > i+1)
         Aright = Aopen[i+2,neighs[j]-i-1]
-        @tensor begin
-          Hspan[a,si,sip1,b,ap,sip,sip1p,bp] := Htwosite[si,sr,sip,srp] * Aright[b,sr,bp,srp] * onesite[sip1, sip1p] * Ileft[a,ap]
+        for k = 1:lrDim
+            numPairs += 1
+            leftMats[numPairs] = JK(Ileft,hl[:,k,:])
+            @tensor begin
+                HR[sip1,b,sip1p,bp] := Aright[b,sr,bp,srp] * onesite[sip1, sip1p] * hr[sr,k,srp]
+            end
+            rightMats[numPairs] = reshape(HR,beta,beta)
         end
-        Ham += reshape(Hspan,alpha*beta,alpha*beta)
       end
     end
-    i > 2 && ( Ham += JK(JK(HLR[i-1],onesite),eye(beta)) )
+    if (i > 2)
+        numPairs += 1
+        leftMats[numPairs] = JK(HLR[i-1],onesite)
+        rightMats[numPairs] = eye(beta)
+    end
     if (i > 2 && toright)
       HLRupdate += JK(HLR[i-1],onesite)
     end
@@ -84,6 +95,8 @@ function sweepFast(m)
     if (i < N-2 && !toright)
       HLRupdate += JK(onesite,HLR[i+2])
     end
+
+    #Start updating here
 
     #Hamiltonian terms that span the current edge
     (left, right) = getSpanningPairs(i)

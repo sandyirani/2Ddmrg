@@ -13,6 +13,7 @@ sp = Float64[0 1; 0 0]
 sm = sp'
 Htwosite = reshape(JK(sz,sz) + 0.5 * JK(sp,sm) + 0.5 * JK(sm,sp),2,2,2,2)
 (hl, hr) = dosvdMid(JK(sz,sz) + 0.5 * JK(sp,sm) + 0.5 * JK(sm,sp))
+lrDim = size(hl)[2]
 # order for Htwosite is s1, s2, s1p, s2p
 
 #  Make initial product state in up down up down up down pattern (Neel state)
@@ -27,7 +28,6 @@ Aopen = [zeros(1,2,1,2) for i=1:N,  j=1:2*width]
 
 alphaG = 0
 betaG = 0
-lrDim = size(hl)[2]
 maxPairs = 2 * width * lrDim
 numPairs = 0
 leftMats = [zeros(1,1) for i=1:maxPairs]
