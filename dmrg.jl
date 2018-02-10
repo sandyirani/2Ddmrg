@@ -96,7 +96,7 @@ function sweep(m)
       #@show(right[j],left[j])
       #@show(size(Aright))
       #@show(size(Aleft))
-      #S@tensor begin
+      @tensor begin
           Hspan[a,si,sip1,b,ap,sip,sip1p,bp] := Htwosite[sl,sr,slp,srp] * Aleft[a,sl,ap,slp] * Aright[b,sr,bp,srp] * onesite[si,sip] * onesite[sip1, sip1p]
       end
       Ham += reshape(Hspan,alpha*beta,alpha*beta)
@@ -119,8 +119,8 @@ function sweep(m)
 
     bigH = 0.5 * (Ham + Ham')
     evn = eigs(bigH;nev=1, which=:SR,ritzvec=true,v0=reshape(AA,alpha*beta))
-    energy = evn[1]
-    @show evn[1]
+    energy = evn[1][1]
+    @show evn[1][1]
     @show size(evn[2])
     gr = evn[2][:,1]
 
@@ -136,9 +136,11 @@ function sweep(m)
     end
 
   end #iteration = one edge update
-  energy 
+  energy
 
 end #end of function sweep
+
+
 
 function updateToRight(i, HLRupdate)
 

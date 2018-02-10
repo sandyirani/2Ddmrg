@@ -1,3 +1,8 @@
+
+
+using TensorOperations
+using LinearMaps
+
 include("gridUtilities.jl")
 include("tensorUtilities.jl")
 include("dmrg.jl")
@@ -7,13 +12,16 @@ width = 6
 len = 10
 N = width*len
 
+
+
 #Global variables
 sz = Float64[0.5 0; 0 -0.5]
 sp = Float64[0 1; 0 0]
 sm = sp'
 Htwosite = reshape(JK(sz,sz) + 0.5 * JK(sp,sm) + 0.5 * JK(sm,sp),2,2,2,2)
-(hl, hr) = dosvdMid(JK(sz,sz) + 0.5 * JK(sp,sm) + 0.5 * JK(sm,sp))
-lrDim = size(hl)[2]
+hl = [sz, 0.5*sp, 0.5*sm]
+hr = [sz, sm, sp]
+lrDim = 3
 # order for Htwosite is s1, s2, s1p, s2p
 
 #  Make initial product state in up down up down up down pattern (Neel state)
@@ -28,7 +36,6 @@ Aopen = [zeros(1,2,1,2) for i=1:N,  j=1:2*width]
 
 
 params = zeros(3) #this will hold alpha, beta, and numPairs for the current iteration
-lrDim = size(hl)[2]
 maxPairs = (2 * width + 6) * lrDim
 leftMats = [zeros(1,1) for i=1:maxPairs]
 rightMats = [zeros(1,1) for i=1:maxPairs]
@@ -37,10 +44,10 @@ function mainLoop()
   m = 3
   numSweeps = 10
   energies = zeros(numSweeps)
-  for swp = 0:numSweeps
+  for swp = 1:numSweeps
     m = round(Int64,1.3*m)
       println("\n sweep = $swp")
-    energies[swp] = sweep(m)/N
+    energies[swp] = sweepFast(m)/N
   end
   energies
 end

@@ -38,7 +38,7 @@ function dosvd4(AA,m,toright)	# AA is ia * 2 * 2 * ib;  svd down the middle;  re
     (U,V,trunc)
 end
 
-using TensorOperations
+
 
 function JK(a,b)	# Julia kron,  ordered for julia arrays; returns matrix
     (a1,a2) = size(a)
