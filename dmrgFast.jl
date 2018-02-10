@@ -3,6 +3,7 @@
 
 
 function sweepFast(m)
+  energy = 0
   for ii=-N+1:N-1		# if negative, going right to left
     ii == 0 && continue
     i = abs(ii)
@@ -16,6 +17,8 @@ function sweepFast(m)
     beta = 2 * dright
     onesite = eye(2)
     numPairs = 0
+
+    #testH = zeros(alpha*beta,alpha*beta)
 
 
     HL = zeros(dleft,2,dleft,2)
@@ -45,17 +48,20 @@ function sweepFast(m)
         numPairs+=1
         leftMats[numPairs] = HL
         rightMats[numPairs] = eye(beta)
+        #testH += JK(leftMats[numPairs],rightMats[numPairs])
       end
 
       if (neighs[j] > i+1)
         Aright = Aopen[i+2,neighs[j]-i-1]
         for k = 1:lrDim
             numPairs += 1
-            leftMats[numPairs] = JK(Ileft,hl[:,k,:])
+            hrk = hr[k]
             @tensor begin
-                HR[sip1,b,sip1p,bp] := Aright[b,sr,bp,srp] * onesite[sip1, sip1p] * hr[sr,k,srp]
+                HR[sip1,b,sip1p,bp] := Aright[b,sr,bp,srp] * onesite[sip1, sip1p] * hrk[sr,srp]
             end
+            leftMats[numPairs] = JK(Ileft,hl[k])
             rightMats[numPairs] = reshape(HR,beta,beta)
+            #testH += JK(leftMats[numPairs],rightMats[numPairs])
         end
       end
     end
@@ -63,6 +69,7 @@ function sweepFast(m)
         numPairs += 1
         leftMats[numPairs] = JK(HLR[i-1],onesite)
         rightMats[numPairs] = eye(beta)
+        #testH += JK(leftMats[numPairs],rightMats[numPairs])
     end
     if (i > 2 && toright)
       HLRupdate += JK(HLR[i-1],onesite)
@@ -80,18 +87,32 @@ function sweepFast(m)
         if (!toright)
           HLRupdate += HR
         end
-        Ham += JK(eye(alpha),HR)
+        numPairs+=1
+        leftMats[numPairs] = eye(alpha)
+        rightMats[numPairs] = HR
+        #testH += JK(leftMats[numPairs],rightMats[numPairs])
       end
 
       if (neighs[j] < i)
         Aleft = Aopen[i-1,i-1-neighs[j]+1]
-        @tensor begin
-          Hspan[a,si,sip1,b,ap,sip,sip1p,bp] := Htwosite[sl,sip1,slp,sip1p] * Aleft[a,sl,ap,slp] * onesite[si, sip] * Iright[b,bp]
+        for k = 1:lrDim
+            numPairs += 1
+            hlk = hl[k]
+            @tensor begin
+                HL[a,si,ap,sip] := Aleft[a,sl,ap,slp] * onesite[si,sip] * hlk[sl,slp]
+            end
+            leftMats[numPairs] = reshape(HL,alpha,alpha)
+            rightMats[numPairs] = JK(hr[k],Iright)
+            #testH += JK(leftMats[numPairs],rightMats[numPairs])
         end
-        Ham += reshape(Hspan,alpha*beta,alpha*beta)
       end
     end
-    i < N-2 && ( Ham += JK(eye(alpha),JK(onesite,HLR[i+2])) )
+    if (i < N-2)
+        numPairs += 1
+        leftMats[numPairs] = eye(alpha)
+        rightMats[numPairs] = JK(onesite,HLR[i+2])
+        #testH += JK(leftMats[numPairs],rightMats[numPairs])
+    end
     if (i < N-2 && !toright)
       HLRupdate += JK(onesite,HLR[i+2])
     end
@@ -103,21 +124,29 @@ function sweepFast(m)
     for j=1:length(left)
       Aright = Aopen[i+2, right[j]-i-1]
       Aleft = Aopen[i-1,i-1-left[j]+1]
-      @tensor begin
-          Hspan[a,si,sip1,b,ap,sip,sip1p,bp] := Htwosite[sl,sr,slp,srp] * Aleft[a,sl,ap,slp] * Aright[sr,b,srp,bp] * onesite[si,sip] * onesite[sip1, sip1p]
+      for k = 1:lrDim
+          hlk = hl[k]
+          hrk = hr[k]
+          numPairs += 1
+          @tensor begin
+              HL[a,si,ap,sip] := Aleft[a,sl,ap,slp] * onesite[si,sip] * hlk[sl,slp]
+          end
+          leftMats[numPairs] = reshape(HL,alpha,alpha)
+          @tensor begin
+              HR[sip1,b,sip1p,bp] := Aright[b,sr,bp,srp] * onesite[sip1, sip1p] * hrk[sr,srp]
+          end
+          rightMats[numPairs] = reshape(HR,beta,beta)
+          #testH += JK(leftMats[numPairs],rightMats[numPairs])
       end
-      Ham += reshape(Hspan,alpha*beta,alpha*beta)
     end
 
 
     #Hamiltonian term on current edge (i, i+1)
-    #This is specific to Hiesenberg will need to make generic
-    Oleft =  Any[JK(eye(dleft),sz), 0.5*JK(eye(dleft),sp), 0.5*JK(eye(dleft),sm)]
-    Oright = Any[JK(sz,eye(dright)),JK(sm,eye(dright)),JK(sp,eye(dright))]
-    for j=1:length(Oleft)
+    for k=1:lrDim
       numPairs += 1
-      leftMat[numPairs] = reshape(Oleft[j],alpha,alpha
-      rightMat[numPairs] = reshape(Oright[j],beta,beta)
+      leftMats[numPairs] = JK(eye(dleft),hl[k])
+      rightMats[numPairs] = JK(hr[k],eye(dright))
+      #testH += JK(leftMats[numPairs],rightMats[numPairs])
     end
 
     #Current tensor is starting point for Lanczos eig algorithm
@@ -132,9 +161,11 @@ function sweepFast(m)
     params[3] = numPairs
     bigH = LinearMap(applyH, alpha*beta; ismutating=false)
     evn = eigs(bigH;nev=1, which=:SR,ritzvec=true,v0=reshape(AA,alpha*beta))
-    @show evn[1]
+    #evn = eigs(testH;nev=1, which=:SR,ritzvec=true,v0=reshape(AA,alpha*beta))
+    @show evn[1][1]
     @show size(evn[2])
     gr = evn[2][:,1]
+    energy = evn[1][1]
 
     AA = reshape(gr,dleft,2,2,dright)
 
@@ -148,12 +179,19 @@ function sweepFast(m)
     end
 
   end #iteration = one edge update
+  energy
 
-end #end of function sweep
+end #end of function sweepFast
 
 function applyH(v::AbstractVector)
-  alpha = params[1]
-  beta = params[2]
-  numPairs = params[3]
+  alpha = Int64(params[1])
+  beta = Int64(params[2])
+  numPairs = Int64(params[3])
 
+  vm = reshape(v, alpha, beta)
+  sum = zeros(alpha, beta)
+  for j = 1:numPairs
+    sum += leftMats[j]' * vm * rightMats[j]
+  end
+  return(reshape(sum, alpha*beta))
 end
