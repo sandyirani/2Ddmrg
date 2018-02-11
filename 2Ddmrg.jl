@@ -45,7 +45,7 @@ function mainLoop()
   numSweeps = 10
   energies = zeros(numSweeps)
   for swp = 1:numSweeps
-    m = round(Int64,2*m)
+    m = round(Int64,1.3*m)
       println("\n sweep = $swp")
     energies[swp] = sweepFast(m)/N
   end

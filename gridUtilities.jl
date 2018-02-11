@@ -72,16 +72,21 @@ function getNumSpan(n)
 
   (j, k) = getCoords(n)
 
-  vert = Int8((isodd(j) && k > 1 && k < width-1) || (iseven(j) && k > 2 && k < width))
-  if (j == len)
-    return(Int64(vert))
+  if ((isodd(j) && (k == 1 || k == width-1)) || (iseven(j) && (k == 2 || k == width)))
+      num = width-2
+  else
+      num = width-1
   end
 
-  if (iseven(j))
-    return(Int64(vert+width-k))
-  else
-    return(Int64(vert+k-1))
+  if (j == len)
+    num -= (width-k)
   end
+
+  if (j == 1)
+      num -= max(0,width-k-1)
+  end
+
+  return(Int64(num))
 end
 
 function getSpanningPairs(n)
@@ -93,23 +98,39 @@ function getSpanningPairs(n)
   leftPoints = zeros(Int64, numSpan)
   rightPoints = zeros(Int64, numSpan)
   (j, k) = getCoords(n)
+  count = 0
 
   if (j < len)
     (a,b) = (iseven(j)? (k+1,width): (1,k-1))
     for i = a:b
-      leftPoints[i-a+1] = Int64(getIndex(j,i))
-      rightPoints[i-a+1] = Int64(getIndex(j+1,i))
+      count += 1
+      leftPoints[count] = Int64(getIndex(j,i))
+      rightPoints[count] = Int64(getIndex(j+1,i))
+    end
+  end
+
+  if (j > 1)
+    (a,b) = (iseven(j)? (1,k-2): (k+2,width))
+    for i = a:b
+      count += 1
+      leftPoints[count] = Int64(getIndex(j-1,i))
+      rightPoints[count] = Int64(getIndex(j,i))
     end
   end
 
   if (isodd(j) && k > 1 && k < width-1) || (iseven(j) && k > 2 && k < width)
+    count += 1
     low = getIndex(j,1)
     high = getIndex(j,width)
     if (high < low)
         (low, high) = (high,low)
     end
-    leftPoints[numSpan] = Int64(low)
-    rightPoints[numSpan] = Int64(high)
+    leftPoints[count] = Int64(low)
+    rightPoints[count] = Int64(high)
+  end
+
+  if (count!=numSpan)
+      @show("Error in caluclating number of spanning pairs")
   end
 
   (leftPoints, rightPoints)
