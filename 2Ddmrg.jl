@@ -8,8 +8,8 @@ include("tensorUtilities.jl")
 include("dmrg.jl")
 include("dmrgFast.jl")
 
-width = 10
-len = 20
+width = 6
+len = 10
 N = width*len
 
 
