@@ -100,6 +100,7 @@ function getSpanningPairs(n)
   (j, k) = getCoords(n)
   count = 0
 
+  #horizontal edges to the right
   if (j < len)
     (a,b) = (iseven(j)? (k+1,width): (1,k-1))
     for i = a:b
@@ -109,6 +110,7 @@ function getSpanningPairs(n)
     end
   end
 
+  #horizonal edges to the left
   if (j > 1)
     (a,b) = (iseven(j)? (1,k-2): (k+2,width))
     for i = a:b
@@ -118,6 +120,7 @@ function getSpanningPairs(n)
     end
   end
 
+  #edge that wraps around the cylinder
   if (isodd(j) && k > 1 && k < width-1) || (iseven(j) && k > 2 && k < width)
     count += 1
     low = getIndex(j,1)

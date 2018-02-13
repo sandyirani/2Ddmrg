@@ -8,8 +8,8 @@ include("tensorUtilities.jl")
 include("dmrg.jl")
 include("dmrgFast.jl")
 
-width = 6
-len = 10
+width = 10
+len = 100
 N = width*len
 
 
@@ -45,7 +45,7 @@ function mainLoop()
   numSweeps = 10
   energies = zeros(numSweeps)
   for swp = 1:numSweeps
-    m = round(Int64,1.3*m)
+    m = round(Int64,1.5*m)
       println("\n sweep = $swp")
     energies[swp] = sweepFast(m)/N
   end
